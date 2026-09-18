@@ -48,7 +48,8 @@ fn main() {
                     "DELETE" => {
                         let key_to_delete = words[1].trim();
                         if map.contains_key(key_to_delete) {
-                            map.remove(key_to_delete);
+                            let removed_value = map.remove(key_to_delete);
+                            println!("Removed {:?}", removed_value.as_ref().unwrap());
                         }
                         else {
                             println!("No value to Delete");
