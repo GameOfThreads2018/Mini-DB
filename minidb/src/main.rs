@@ -1,8 +1,10 @@
-use std::collections::HashMap;
 use std::io::{self, Write};
+use crate::database::Database;
+mod database;
+mod storage;
 
 fn main() {
-    let mut map: HashMap<String, String> = HashMap::with_capacity(100);
+    let mut database_inst: Database = Database::new();
     println!("Insert commands (SET, GET, DELETE, EXIST) along with key/values as appropriate");
     loop {
         print!("> ");
@@ -28,8 +30,8 @@ fn main() {
                     "SET" => {
                         let key_to_insert = words[1].trim();
                         let value_to_insert = words[2].trim();
-                        if !map.contains_key(key_to_insert) {
-                            map.insert(key_to_insert.to_string(), value_to_insert.to_string());
+                        if !database_inst.exists(key_to_insert) {
+                            database_inst.set(key_to_insert.to_string(), value_to_insert.to_string());
                         }
                         else {
                             println!("Value already exists"); 
@@ -37,8 +39,8 @@ fn main() {
                     }
                     "GET" => {
                         let key_to_query = words[1].trim();
-                        if map.contains_key(key_to_query) {
-                            let value: Option<&String> = map.get(key_to_query);
+                        if database_inst.exists(key_to_query) {
+                            let value: Option<&String> = database_inst.get(key_to_query);
                             println!("{}",value.map(|s| s.as_str()).unwrap_or(""));
                         }
                         else {
@@ -47,9 +49,11 @@ fn main() {
                     }
                     "DELETE" => {
                         let key_to_delete = words[1].trim();
-                        if map.contains_key(key_to_delete) {
-                            let removed_value = map.remove(key_to_delete);
-                            println!("Removed {:?}", removed_value.as_ref().unwrap());
+                        if database_inst.exists(key_to_delete) {
+                            let removed_value = database_inst.delete(key_to_delete);
+                            if removed_value {
+                                println!("Remove operation successful Key:{}", key_to_delete);
+                            }
                         }
                         else {
                             println!("No value to Delete");
@@ -57,7 +61,7 @@ fn main() {
                     }
                     "EXISTS" => {
                         let key_to_query = words[1].trim();
-                        if map.contains_key(key_to_query) {
+                        if database_inst.exists(key_to_query) {
                             println!("true");
                         }
                         else {
