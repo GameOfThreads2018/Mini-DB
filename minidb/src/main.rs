@@ -1,5 +1,7 @@
 use std::io::{self, Write};
 use crate::database::Database;
+use crate::command::Command;
+mod command;
 mod database;
 mod storage;
 
@@ -30,8 +32,9 @@ fn main() {
                     "SET" => {
                         let key_to_insert = words[1].trim();
                         let value_to_insert = words[2].trim();
+                        let set_command = Command::Set { key: String::from(key_to_insert), value: String::from(value_to_insert)};
                         if !database_inst.exists(key_to_insert) {
-                            database_inst.set(key_to_insert.to_string(), value_to_insert.to_string());
+                            database_inst.set(key_to_insert.to_string(), set_command, value_to_insert.to_string());
                         }
                         else {
                             println!("Value already exists"); 
@@ -39,6 +42,7 @@ fn main() {
                     }
                     "GET" => {
                         let key_to_query = words[1].trim();
+                        let get_command = Command::Get { key: String::from(key_to_query)};
                         if database_inst.exists(key_to_query) {
                             let value: Option<&String> = database_inst.get(key_to_query);
                             println!("{}",value.map(|s| s.as_str()).unwrap_or(""));
@@ -49,8 +53,9 @@ fn main() {
                     }
                     "DELETE" => {
                         let key_to_delete = words[1].trim();
+                        let delete_command = Command::Delete{ key: String::from(key_to_delete)} ;
                         if database_inst.exists(key_to_delete) {
-                            let removed_value = database_inst.delete(key_to_delete);
+                            let removed_value = database_inst.delete(delete_command, key_to_delete);
                             if removed_value {
                                 println!("Remove operation successful Key:{}", key_to_delete);
                             }
@@ -61,6 +66,7 @@ fn main() {
                     }
                     "EXISTS" => {
                         let key_to_query = words[1].trim();
+                        let exist_command = Command::Exists { key: String::from(key_to_query) };
                         if database_inst.exists(key_to_query) {
                             println!("true");
                         }
