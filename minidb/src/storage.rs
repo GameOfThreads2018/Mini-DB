@@ -1,7 +1,7 @@
 use std::collections::HashMap;
-use std::fs::{self, OpenOptions};
+use std::fs::OpenOptions;
 use std::fs::File;
-use std::fmt::Write;
+use std::io::Write;
 use std::io::{BufRead, BufReader};
 use crate::command::Command;
 
@@ -39,7 +39,8 @@ impl Storage {
         for (key, value) in data {
             result_str.push_str(&format!("{}|{}\n", key, value));
         }
-        fs::write(&self.path, result_str)?;
+        let mut file = OpenOptions::new().append(true).create(true).open(&self.path)?;
+        writeln!(file, "{}",result_str)?;
         Ok(())
     }
 }
@@ -51,7 +52,7 @@ impl Wal {
     pub fn append(&mut self, command: &Command) -> std::io::Result<()> {
          let command_string = command.to_string();
          let mut file = OpenOptions::new().append(true).create(true).open(&self.path)?;
-        //  writeln!(file, "{}")?;
+         writeln!(file, "{}", command_string)?;
          Ok(())
     }
 

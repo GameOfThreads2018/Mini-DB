@@ -10,7 +10,7 @@ pub struct Database {
 impl Database {
     pub fn new() -> Self {
         let file_path: &str = "storage/data.db";
-        let wal_path = "stroage/database.wal";
+        let wal_path = "storage/database.wal";
         let wal:Wal = Wal::new(wal_path);
         let storage_var: Storage = Storage::new(file_path, wal);
         let data_map = match storage_var.load() {
