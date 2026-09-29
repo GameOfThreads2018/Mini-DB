@@ -1,21 +1,26 @@
 use std::collections::HashMap;
-use std::fs;
+use std::fs::OpenOptions;
 use std::fs::File;
+use std::io::Write;
 use std::io::{BufRead, BufReader};
-
-
+use crate::command::Command;
 
 pub struct Storage {
+    path: String,
+    wal: Wal
+}
+
+pub struct Wal {
     path: String
 }
 
 impl Storage {
-    pub fn new(file_path: &str) -> Self{
-        Self{path:String::from(file_path)}
+    pub fn new(file_path: &str, write_ahead_log:Wal) -> Self{
+        Self{path:String::from(file_path), wal:write_ahead_log}
     }
 
-    pub fn load(path: &str) -> Result<HashMap<String, String>, std::io::Error> {
-    let file = File::open(path)?;
+    pub fn load(&self) -> Result<HashMap<String, String>, std::io::Error> {
+    let file = File::open(&self.path)?;
     let reader = BufReader::new(file);
     let mut loaded_data = HashMap::new();
     for line in reader.lines() {
@@ -28,12 +33,29 @@ impl Storage {
     Ok(loaded_data)
 }
 
-    pub fn save(path:&str, data: &HashMap<String, String>) -> Result<(), std::io::Error> {
+    pub fn save(&mut self, command:Command, data: &HashMap<String, String>) -> Result<(), std::io::Error> {
+        self.wal.append(&command)?;
         let mut result_str = String::new();
         for (key, value) in data {
             result_str.push_str(&format!("{}|{}\n", key, value));
         }
-        fs::write(path, result_str)?;
+        let mut file = OpenOptions::new().append(true).create(true).open(&self.path)?;
+        writeln!(file, "{}",result_str)?;
         Ok(())
     }
+}
+
+impl Wal {
+    pub fn new(file_path:&str) -> Self{
+         Self{path:String::from(file_path)}
+    }
+    pub fn append(&mut self, command: &Command) -> std::io::Result<()> {
+         let command_string = command.to_string();
+         let mut file = OpenOptions::new().append(true).create(true).open(&self.path)?;
+         writeln!(file, "{}", command_string)?;
+         Ok(())
+    }
+
+    // pub fn recover(&mut self) -> Result<Vec<Command>{
+    // }
 }
