@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::Write;
 use std::io::{BufRead, BufReader};
 use crate::command::Command;
-
+// TODO instead of creating a file object for evert method call, can i reuse the same object but point to a diff path.
 pub struct Storage {
     path: String,
     wal: Wal
@@ -56,6 +56,22 @@ impl Wal {
          Ok(())
     }
 
-    // pub fn recover(&mut self) -> Result<Vec<Command>{
-    // }
+    pub fn recover(&mut self) -> Result<Vec<Command>> {
+    let file = File::open(&self.path)?;
+    let reader = BufReader::new(file);
+
+    let mut commands = Vec::new();
+
+    for line in reader.lines() {
+        let line = line?;
+        let command = Command::from_string(line);
+        commands.push(command);
+    }
+    if commands.is_empty() {
+        Err(())
+    }
+    else { 
+        Ok(commands)
+    }
+}
 }
